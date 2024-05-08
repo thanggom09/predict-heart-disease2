@@ -52,11 +52,17 @@ thal_mapping = {
     "3. Tổn thương có thể khắc phục": 3
 }
 
+def check_input_values(*args):
+    for arg in args:
+        if not arg:
+            return False
+    return True
+
 def predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_sugar_str,
             electro_results_str, max_heart_rate, angina_str, oldpeak, slope, vessels_colored, thal_str):
     # Check if any input values are empty
-    if not all([age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_sugar_str,
-                electro_results_str, max_heart_rate, angina_str, oldpeak, slope, vessels_colored, thal_str]):
+    if not check_input_values(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_sugar_str,
+                               electro_results_str, max_heart_rate, angina_str, oldpeak, slope, vessels_colored, thal_str):
         return None, "Vui lòng nhập đầy đủ các thông tin !!!"
 
     # Convert input values to appropriate data types
@@ -79,7 +85,7 @@ def predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_
                             electro_results, max_heart_rate, angina, oldpeak, slope,
                             vessels_colored, thal]])
 
-    # Standardize the input data
+    # Standardize the input data (if necessary)
     scaled_sample = sc.transform(new_sample)
 
     # Make predictions with the loaded model
@@ -87,7 +93,6 @@ def predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_
     binary_prediction = "Có" if prediction > 0.5 else "Không"
 
     return prediction, binary_prediction
-
 
 # Streamlit UI
 st.title("Dự đoán bệnh tim")
