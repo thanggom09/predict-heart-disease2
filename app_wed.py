@@ -1,8 +1,9 @@
-import streamlit as st
-import numpy as np
+import streamlit as st 
+import numpy as np 
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Import the dataset
 dataset = pd.read_csv('heart.csv')
@@ -52,17 +53,11 @@ thal_mapping = {
     "3. Tổn thương có thể khắc phục": 3
 }
 
-def check_input_values(*args):
-    for arg in args:
-        if not arg:
-            return False
-    return True
-
 def predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_sugar_str,
             electro_results_str, max_heart_rate, angina_str, oldpeak, slope, vessels_colored, thal_str):
     # Check if any input values are empty
-    if not check_input_values(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_sugar_str,
-                               electro_results_str, max_heart_rate, angina_str, oldpeak, slope, vessels_colored, thal_str):
+    if not all([age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_sugar_str,
+                electro_results_str, max_heart_rate, angina_str, oldpeak, slope, vessels_colored, thal_str]):
         return None, "Vui lòng nhập đầy đủ các thông tin !!!"
 
     # Convert input values to appropriate data types
@@ -75,7 +70,7 @@ def predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_
     electro_results = electro_results_mapping.get(electro_results_str, 0)
     max_heart_rate = int(max_heart_rate)
     angina = angina_mapping.get(angina_str, 0)
-    oldpeak = int(oldpeak)
+    oldpeak = float(oldpeak)
     slope = int(slope)
     vessels_colored = int(vessels_colored)
     thal = thal_mapping.get(thal_str, 0)
@@ -85,7 +80,7 @@ def predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_
                             electro_results, max_heart_rate, angina, oldpeak, slope,
                             vessels_colored, thal]])
 
-    # Standardize the input data (if necessary)
+    # Standardize the input data
     scaled_sample = sc.transform(new_sample)
 
     # Make predictions with the loaded model
@@ -95,7 +90,7 @@ def predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_
     return prediction, binary_prediction
 
 # Streamlit UI
-st.title("Dự đoán bệnh tim")
+st.header("Dự đoán bệnh tim \u2764️")
 
 # Input widgets
 age = st.number_input("Tuổi", value=0)
@@ -107,12 +102,11 @@ blood_sugar_str = st.selectbox("Đo lượng đường trong máu", list(blood_s
 electro_results_str = st.selectbox("Chỉ số huyết áp", list(electro_results_mapping.keys()))
 max_heart_rate = st.number_input("Nhịp tim tối đa trên phút", value=0)
 angina_str = st.selectbox("Đau thắt ngực do vận động", list(angina_mapping.keys()))
-oldpeak = st.number_input("Chỉ số Oldpeak", value=0)
+oldpeak = st.number_input("Chỉ số Oldpeak", value=0.0)
 slope = st.number_input("Độ dốc đỉnh đoạn ST của bài kiểm tra tăng cường", value=0)
 vessels_colored = st.number_input("Số mạch máu chính (0-3) được nhuộm bằng fluoroscopy", value=0)
 thal_str = st.selectbox("Bệnh Thalassemia (thal)", list(thal_mapping.keys()))
 
-# Update the predict() function to handle missing inputs and return an error message if any input is missing
 if st.button("Dự đoán"):
     prediction, binary_prediction = predict(age, gender_str, chest_pain_str, blood_pressure, cholesterol, blood_sugar_str,
                                              electro_results_str, max_heart_rate, angina_str, oldpeak, slope,
@@ -122,3 +116,16 @@ if st.button("Dự đoán"):
     else:
         st.write(f"Tỉ lệ mắc bệnh tim : {prediction[0][0]*100:.2f}%")
         st.write(f"Dự đoán mắc bệnh tim: {binary_prediction}")
+        
+        # Create the pie chart
+        labels = ['Mắc bệnh tim', 'Không mắc bệnh tim']
+        sizes = [prediction[0][0], 1 - prediction[0][0]]
+        colors = ['#ff9999','#66b3ff']
+        explode = (0.1, 0)  # explode the 1st slice
+        
+        fig1, ax1 = plt.subplots()
+        ax1.pie(sizes, explode=explode, labels=labels, colors=colors,
+                autopct='%1.1f%%', shadow=True, startangle=90)
+        ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+        st.pyplot(fig1)
